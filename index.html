@@ -48,9 +48,9 @@
         <h1 class="text-4xl font-extrabold text-white">BLINDNAV</h1>
     </header>
 
-    <!-- Main SOS Button -->
-    <!-- MENGHAPUS mb-2 (margin bottom) untuk membuat jarak Status dan Pengawas sangat dekat -->
-    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow">
+    <!-- Main SOS Button & Status Wrapper -->
+    <!-- MENGURANGI jarak vertikal: mb-4 diubah menjadi mb-2 -->
+    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 mb-2">
         
         <!-- Tombol Utama: Ukuran mobile w-80/h-80, desktop md:w-[480px]/md:h-[480px] -->
         <button id="sos-btn" 
@@ -73,17 +73,20 @@
     </div>
     
     <!-- Informasi Pengawas (Rata Kiri) -->
-    <!-- Menggunakan max-w-lg (sudah konsisten) -->
     <div class="supervisor-info p-4 rounded-xl w-full max-w-lg shadow-lg text-left">
         <h2 class="text-xl font-bold mb-2 text-white">Informasi Pengawas</h2>
-        <!-- Menggunakan flex/grid untuk rata kiri -->
-        <div class="grid grid-cols-2 text-sm">
-            <p>Nama:</p>
-            <p class="font-semibold text-gray-200" id="pengawas-nama"></p>
-        </div>
-        <div class="grid grid-cols-2 text-sm">
-            <p>HP   :</p>
-            <p class="font-semibold text-gray-200" id="pengawas-hp"></p>
+        <!-- MENGGANTI grid dengan flex dan mengatur lebar label agar data lebih rapat -->
+        <div class="space-y-1">
+            <div class="flex text-sm">
+                <!-- Label dengan lebar tetap (w-16) -->
+                <p class="w-16 font-medium text-gray-300">Nama:</p>
+                <!-- Nilai mengambil sisa lebar -->
+                <p class="font-semibold text-gray-200 flex-1" id="pengawas-nama"></p>
+            </div>
+            <div class="flex text-sm">
+                <p class="w-16 font-medium text-gray-300">HP:</p>
+                <p class="font-semibold text-gray-200 flex-1" id="pengawas-hp"></p>
+            </div>
         </div>
     </div>
 
@@ -219,6 +222,3 @@
 
 </body>
 </html>
-
-
-
