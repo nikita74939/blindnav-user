@@ -109,13 +109,7 @@
             // Jika status saat ini AMAN, kirim sinyal DARURAT
             if (!currentStatusSOS) {
                 // Gunakan konfirmasi kustom sebagai pengganti alert/confirm bawaan
-                const isConfirmed = prompt("Ketik 'YA' untuk mengonfirmasi Anda membutuhkan Bantuan Darurat.");
-                
-                if (isConfirmed && isConfirmed.toUpperCase() === 'YA') {
-                    kirimSOS(true);
-                } else if (isConfirmed !== null) {
-                    console.log("Pengiriman SOS Dibatalkan.");
-                }
+                kirimSOS(true);
             } else {
                 // Jika status saat ini DARURAT, jangan lakukan apa-apa, harus menggunakan Batal SOS
                 console.log("SOS sudah aktif. Gunakan tombol 'BATALKAN SOS' jika Anda aman.");
@@ -124,14 +118,7 @@
         
         // --- Fungsi Batal SOS (untuk pengguna) ---
         function batalSOS() {
-            if (currentStatusSOS) {
-                 const isConfirmed = prompt("Ketik 'AMAN' untuk mengonfirmasi Anda membatalkan permintaan SOS karena sudah aman.");
-                 if (isConfirmed && isConfirmed.toUpperCase() === 'AMAN') {
-                    kirimSOS(false);
-                 } else if (isConfirmed !== null) {
-                    console.log("Pembatalan SOS Dibatalkan.");
-                 }
-            }
+            kirimSOS(false);
         }
 
         // --- Fungsi Inti Kirim/Reset Status ke Firebase ---
@@ -158,12 +145,12 @@
             userRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
-                    penggunaName.textContent = 'Pengguna Tidak Ditemukan';
+                    penggunaName.textContent = 'Yuli';
                     return;
                 }
 
                 currentStatusSOS = data.status_sos === true;
-                penggunaName.textContent = data.nama || 'Pengguna Tidak Dikenal';
+                penggunaName.textContent = data.nama || 'Yuli';
 
                 // Update UI berdasarkan status SOS dari database
                 if (currentStatusSOS) {
@@ -204,3 +191,4 @@
 
 </body>
 </html>
+
