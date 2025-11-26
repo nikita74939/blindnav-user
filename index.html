@@ -15,6 +15,8 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             border: 4px solid transparent;
+            /* Tambahkan flex-shrink-0 untuk mencegah distorsi di layout flex */
+            flex-shrink: 0; 
         }
         .sos-button:focus {
             outline: none;
@@ -24,6 +26,7 @@
             transform: scale(0.98);
         }
         .sos-active-glow {
+            /* Warna glow disesuaikan dengan tombol merah */
             animation: glow 1.5s infinite alternate;
         }
         @keyframes glow {
@@ -40,17 +43,18 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-between p-4 pb-8">
 
-    <!-- Header (Hanya BLINDNAV) -->
-    <header class="w-full max-w-lg mb-4 text-center">
+    <!-- Header (BLINDNAV) -->
+    <header class="w-full max-w-lg mb-8 text-center">
         <h1 class="text-4xl font-extrabold text-white">BLINDNAV</h1>
     </header>
 
     <!-- Main SOS Button -->
-    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow">
+    <!-- Mengurangi mb-12 menjadi mb-6 untuk memperdekat jarak dengan Info Pengawas -->
+    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow mb-6">
+        
+        <!-- Tombol Utama yang kini memiliki lebar dan tinggi yang sama (w-64 dan h-64) -->
         <button id="sos-btn" 
-            class="sos-button w-full max-w-xs h-72 rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
-            ontouchstart="handleTouchStart(event)" 
-            ontouchend="handleTouchEnd(event)"
+            class="sos-button w-64 h-64 md:w-80 md:h-80 mx-auto rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
             onclick="handleSosClick()">
             
             <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 md:h-32 md:w-32" viewBox="0 0 24 24" fill="currentColor">
@@ -61,16 +65,26 @@
         </button>
         
         <!-- Status Konfirmasi SOS -->
-        <div id="konfirmasi-sos" class="p-3 rounded-xl text-center w-full max-w-md bg-gray-700 font-semibold text-xl">
+        <!-- Mengubah max-w-md menjadi max-w-lg agar lebarnya sama dengan Info Pengawas -->
+        <div id="konfirmasi-sos" class="p-3 rounded-xl text-center w-full max-w-lg bg-gray-700 font-semibold text-xl">
             STATUS: <span id="sos-current-status" class="text-green-400">AMAN</span>
         </div>
+        
     </div>
     
-    <!-- Informasi Pengawas -->
-    <div class="supervisor-info p-4 rounded-xl text-center w-full max-w-lg shadow-lg">
-        <h2 class="text-lg font-bold mb-2 text-white">Informasi Pengawas</h2>
-        <p class="text-sm">Nama: <span id="pengawas-nama" class="font-semibold text-gray-200"></span></p>
-        <p class="text-sm">HP: <span id="pengawas-hp" class="font-semibold text-gray-200"></span></p>
+    <!-- Informasi Pengawas (Rata Kiri) -->
+    <!-- Menggunakan max-w-lg (sudah konsisten) -->
+    <div class="supervisor-info p-4 rounded-xl w-full max-w-lg shadow-lg text-left">
+        <h2 class="text-xl font-bold mb-2 text-white">Informasi Pengawas</h2>
+        <!-- Menggunakan flex/grid untuk rata kiri -->
+        <div class="grid grid-cols-2 text-sm">
+            <p>Nama:</p>
+            <p class="font-semibold text-gray-200" id="pengawas-nama"></p>
+        </div>
+        <div class="grid grid-cols-2 text-sm">
+            <p>HP:</p>
+            <p class="font-semibold text-gray-200" id="pengawas-hp"></p>
+        </div>
     </div>
 
 
@@ -91,8 +105,9 @@
         // --- Inisialisasi Firebase ---
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        // Menggunakan path yang sama dengan file supervisor.html
         const userRef = db.ref('devices/pengguna');
-        const pengawasRef = db.ref('devices/pengawas');
+        const pengawasRef = db.ref('devices/pengawas'); 
         
         // Elemen UI
         const sosBtn = document.getElementById('sos-btn');
@@ -102,7 +117,7 @@
 
         let currentStatusSOS = false; // Status SOS lokal
         let lastClickTime = 0;
-        const DOUBLE_CLICK_TIME = 300; // Maksimum 300ms antara dua klik
+        const DOUBLE_CLICK_TIME = 2000; // Ditetapkan 2000ms (2 detik) sesuai permintaan user
 
         // Helper: Ganti alert/confirm dengan pesan di konsol
         window.alert = (message) => console.log("Alert terblokir:", message);
@@ -113,46 +128,16 @@
             const currentTime = new Date().getTime();
             const timeDiff = currentTime - lastClickTime;
 
+            // Jika perbedaan waktu antara klik saat ini dan klik terakhir kurang dari 2 detik (2000ms)
             if (timeDiff > 0 && timeDiff < DOUBLE_CLICK_TIME) {
-                // Double tap terdeteksi
+                // Double tap terdeteksi: Toggle status SOS
                 toggleSOSState();
-                lastClickTime = 0; // Reset untuk mencegah triple tap
+                lastClickTime = 0; // Reset
+                console.log("Double-tap terdeteksi. Status SOS di-toggle.");
             } else {
-                // Single tap
+                // Single tap: Simpan waktu klik pertama dan tunggu klik kedua
                 lastClickTime = currentTime;
-                // Opsional: Beri umpan balik bahwa perlu double tap
-                console.log("Tekan dua kali dengan cepat untuk mengaktifkan/menonaktifkan SOS.");
-            }
-        }
-        
-        // Menangani touch event pada perangkat mobile
-        let touchStartTimestamp = 0;
-        let tapCount = 0;
-        
-        function handleTouchStart(event) {
-            touchStartTimestamp = new Date().getTime();
-        }
-
-        function handleTouchEnd(event) {
-            const touchEndTimestamp = new Date().getTime();
-            // Jarak sentuh/klik yang terlalu lama tidak dihitung sebagai tap
-            if (touchEndTimestamp - touchStartTimestamp > DOUBLE_CLICK_TIME) {
-                tapCount = 0;
-                return;
-            }
-
-            const currentTime = new Date().getTime();
-            const timeDiff = currentTime - lastClickTime;
-
-            if (timeDiff > 0 && timeDiff < DOUBLE_CLICK_TIME) {
-                // Double tap terdeteksi (mobile)
-                toggleSOSState();
-                lastClickTime = 0;
-                tapCount = 0;
-            } else {
-                // Single tap
-                lastClickTime = currentTime;
-                tapCount++;
+                console.log("Single-tap terdeteksi. Menunggu double-tap...");
             }
         }
 
@@ -164,14 +149,15 @@
 
         // --- Fungsi Inti Kirim/Reset Status ke Firebase ---
         function kirimStatusKeFirebase(status) {
-            // Perbarui status_sos di node pengguna dan pengawas (hanya jika diperlukan)
+            // Perbarui status_sos di node pengguna dan pengawas 
             Promise.all([
                 userRef.update({ status_sos: status }),
-                pengawasRef.update({ status_sos: status }) // Asumsi pengawas juga perlu tahu statusnya
+                // Asumsi pengawas juga perlu diupdate
+                pengawasRef.update({ status_sos: status }) 
             ])
             .then(() => {
                 const action = status ? "diaktifkan" : "dinonaktifkan";
-                console.log(`Status SOS berhasil ${action}.`);
+                console.log(`Status SOS berhasil ${action} di Firebase.`);
             })
             .catch((error) => {
                 console.error("Gagal memperbarui status SOS:", error);
@@ -182,11 +168,12 @@
         // --- Fungsi untuk Mendengarkan Data Real-time ---
         function listenForData() {
             
-            // 1. Mendengarkan Status SOS Pengguna
+            // 1. Mendengarkan Status SOS Pengguna (untuk update UI)
             userRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) return;
 
+                // Status SOS dapat diubah oleh Pengguna (double-tap) atau Pengawas (Acknowledge)
                 currentStatusSOS = data.status_sos === true;
 
                 // Update UI berdasarkan status SOS dari database
@@ -216,10 +203,9 @@
                     pengawasHpEl.textContent = 'N/A';
                     return;
                 }
-                // Catatan: Saya asumsikan ada properti 'hp' di node pengawas
+                // Mengambil nama dan nomor HP pengawas dari node 'devices/pengawas'
                 pengawasNamaEl.textContent = data.nama || 'Tidak Ditetapkan';
-                // Jika 'hp' tidak ada, gunakan placeholder
-                pengawasHpEl.textContent = data.hp || '08xxxxxxxxxx (Contoh)'; 
+                pengawasHpEl.textContent = data.hp || 'N/A'; 
 
             }, (error) => {
                  console.error("Error membaca Firebase data pengawas:", error);
