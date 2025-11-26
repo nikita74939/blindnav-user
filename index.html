@@ -49,15 +49,15 @@
     </header>
 
     <!-- Main SOS Button -->
-    <!-- Mengurangi mb-6 menjadi mb-4 untuk memperdekat jarak dengan Info Pengawas -->
-    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow mb-4">
+    <!-- Mengurangi mb-4 menjadi mb-2 untuk memperdekat jarak dengan Info Pengawas -->
+    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow mb-2">
         
-        <!-- Tombol Utama: Mengubah w-64/h-64 menjadi w-72/h-72 (mobile) dan md:w-96/md:h-96 (desktop) -->
+        <!-- Tombol Utama: Memperbesar lingkaran menjadi w-80/h-80 (mobile) dan md:w-[480px]/md:h-[480px] (desktop) -->
         <button id="sos-btn" 
-            class="sos-button w-72 h-72 md:w-96 md:h-96 mx-auto rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
+            class="sos-button w-80 h-80 md:w-[480px] md:h-[480px] mx-auto rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
             onclick="handleSosClick()">
             
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-28 w-28 md:h-40 md:w-40" viewBox="0 0 24 24" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32 md:h-48 md:w-48" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11 15h2v2h-2zm0-8h2v6h-2z"/>
                 <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" clip-rule="evenodd"/>
             </svg>
@@ -117,7 +117,7 @@
 
         let currentStatusSOS = false; // Status SOS lokal
         let lastClickTime = 0;
-        const DOUBLE_CLICK_TIME = 1000; 
+        const DOUBLE_CLICK_TIME = 1000; // Sudah diatur ke 1 detik (1000ms)
 
         // Helper: Ganti alert/confirm dengan pesan di konsol
         window.alert = (message) => console.log("Alert terblokir:", message);
