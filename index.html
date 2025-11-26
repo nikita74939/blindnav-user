@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+s<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -89,7 +89,7 @@
         // --- Inisialisasi Firebase ---
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const userRef = db.ref('pengguna');
+        const userRef = db.ref('devices/pengguna');
         
         // Elemen UI
         const sosBtn = document.getElementById('sos-btn');
@@ -191,5 +191,6 @@
 
 </body>
 </html>
+
 
 
