@@ -90,6 +90,7 @@ s<!DOCTYPE html>
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const userRef = db.ref('devices/pengguna');
+        const userRef2 = db.ref('devices/pengawas');
         
         // Elemen UI
         const sosBtn = document.getElementById('sos-btn');
@@ -123,18 +124,19 @@ s<!DOCTYPE html>
 
         // --- Fungsi Inti Kirim/Reset Status ke Firebase ---
         function kirimSOS(status) {
-            userRef.update({
-                status_sos: status
-            })
+            Promise.all([
+                userRef.update({ status_sos: status }),
+                userRef2.update({ status_sos: status })
+            ])
             .then(() => {
                 const action = status ? "diaktifkan" : "dinonaktifkan";
                 console.log(`Status SOS berhasil ${action}.`);
             })
             .catch((error) => {
                 console.error("Gagal memperbarui status SOS:", error);
-                console.error("Kesalahan: Gagal kirim sinyal ke database. Cek koneksi atau izin.");
             });
         }
+
 
         // --- Fungsi untuk Mendengarkan Data Real-time (Konfirmasi) ---
         function listenForData() {
@@ -145,12 +147,12 @@ s<!DOCTYPE html>
             userRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
-                    penggunaName.textContent = 'Yuli';
+                    penggunaName.textContent = 'User';
                     return;
                 }
 
                 currentStatusSOS = data.status_sos === true;
-                penggunaName.textContent = data.nama || 'Yuli';
+                penggunaName.textContent = data.nama || 'User';
 
                 // Update UI berdasarkan status SOS dari database
                 if (currentStatusSOS) {
@@ -191,6 +193,7 @@ s<!DOCTYPE html>
 
 </body>
 </html>
+
 
 
 
