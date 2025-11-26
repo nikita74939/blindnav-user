@@ -49,10 +49,10 @@
     </header>
 
     <!-- Main SOS Button -->
-    <!-- Mengurangi mb-4 menjadi mb-2 untuk memperdekat jarak dengan Info Pengawas -->
-    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow mb-2">
+    <!-- MENGHAPUS mb-2 (margin bottom) untuk membuat jarak Status dan Pengawas sangat dekat -->
+    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow">
         
-        <!-- Tombol Utama: Memperbesar lingkaran menjadi w-80/h-80 (mobile) dan md:w-[480px]/md:h-[480px] (desktop) -->
+        <!-- Tombol Utama: Ukuran mobile w-80/h-80, desktop md:w-[480px]/md:h-[480px] -->
         <button id="sos-btn" 
             class="sos-button w-80 h-80 md:w-[480px] md:h-[480px] mx-auto rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
             onclick="handleSosClick()">
