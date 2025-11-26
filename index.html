@@ -15,7 +15,6 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             border: 4px solid transparent;
-            /* Pastikan fokus mudah dilihat untuk aksesibilitas */
         }
         .sos-button:focus {
             outline: none;
@@ -31,45 +30,48 @@
             from { box-shadow: 0 0 10px #f87171, 0 0 20px #f87171, 0 0 30px #dc2626; }
             to { box-shadow: 0 0 20px #dc2626, 0 0 30px #dc2626, 0 0 40px #b91c1c; }
         }
+        .supervisor-info {
+            background-color: #374151; /* gray-700 */
+        }
     </style>
     <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-between p-4 pb-8">
 
-    <!-- Header Status -->
-    <header class="w-full max-w-lg mb-8 text-center">
-        <h1 class="text-3xl font-extrabold text-white mb-2">BLINDNAV</h1>
-        <p class="text-xl font-semibold mb-4 text-gray-200">Halo, <span id="pengguna-name">Yuli</span>!</p>
-        <div id="status-display" class="p-3 rounded-xl font-bold transition-colors duration-300">
-            Koneksi: <span id="koneksi-status">Memuat...</span>
-        </div>
+    <!-- Header (Hanya BLINDNAV) -->
+    <header class="w-full max-w-lg mb-4 text-center">
+        <h1 class="text-4xl font-extrabold text-white">BLINDNAV</h1>
     </header>
 
     <!-- Main SOS Button -->
-    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4">
-        <button id="sos-btn" onclick="toggleSOS()"
-            class="sos-button w-full h-80 rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-1/3 w-1/3" viewBox="0 0 24 24" fill="currentColor">
+    <div class="w-full max-w-lg flex flex-col items-center justify-center space-y-4 flex-grow">
+        <button id="sos-btn" 
+            class="sos-button w-full max-w-xs h-72 rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-red-900"
+            ontouchstart="handleTouchStart(event)" 
+            ontouchend="handleTouchEnd(event)"
+            onclick="handleSosClick()">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 md:h-32 md:w-32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11 15h2v2h-2zm0-8h2v6h-2z"/>
                 <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-4xl font-black mt-2 uppercase">SOS DARURAT</span>
+            <span class="text-3xl font-black mt-2 uppercase">SOS DARURAT</span>
         </button>
         
         <!-- Status Konfirmasi SOS -->
-        <div id="konfirmasi-sos" class="p-4 rounded-xl text-center w-full bg-gray-700 font-semibold text-lg">
-            STATUS SAAT INI: <span id="sos-current-status" class="text-green-400">AMAN</span>
+        <div id="konfirmasi-sos" class="p-3 rounded-xl text-center w-full max-w-md bg-gray-700 font-semibold text-xl">
+            STATUS: <span id="sos-current-status" class="text-green-400">AMAN</span>
         </div>
     </div>
     
-    <!-- Tombol Batalkan SOS (hanya muncul saat SOS aktif) -->
-    <button id="batal-sos-btn" onclick="batalSOS()" disabled
-        class="mt-6 w-full max-w-lg py-4 px-6 rounded-xl text-xl font-bold transition-all duration-300
-               bg-gray-500 text-white cursor-not-allowed shadow-md hover:shadow-xl opacity-50">
-        BATALKAN SOS
-    </button>
+    <!-- Informasi Pengawas -->
+    <div class="supervisor-info p-4 rounded-xl text-center w-full max-w-lg shadow-lg">
+        <h2 class="text-lg font-bold mb-2 text-white">Informasi Pengawas</h2>
+        <p class="text-sm">Nama: <span id="pengawas-nama" class="font-semibold text-gray-200"></span></p>
+        <p class="text-sm">HP: <span id="pengawas-hp" class="font-semibold text-gray-200"></span></p>
+    </div>
 
 
     <script>
@@ -90,43 +92,82 @@
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const userRef = db.ref('devices/pengguna');
-        const userRef2 = db.ref('devices/pengawas');
+        const pengawasRef = db.ref('devices/pengawas');
         
         // Elemen UI
         const sosBtn = document.getElementById('sos-btn');
-        const batalSosBtn = document.getElementById('batal-sos-btn');
-        const statusKoneksi = document.getElementById('koneksi-status');
-        const penggunaName = document.getElementById('pengguna-name');
         const sosCurrentStatus = document.getElementById('sos-current-status');
+        const pengawasNamaEl = document.getElementById('pengawas-nama');
+        const pengawasHpEl = document.getElementById('pengawas-hp');
 
-        let currentStatusSOS = false; // Status lokal
+        let currentStatusSOS = false; // Status SOS lokal
+        let lastClickTime = 0;
+        const DOUBLE_CLICK_TIME = 300; // Maksimum 300ms antara dua klik
 
         // Helper: Ganti alert/confirm dengan pesan di konsol
         window.alert = (message) => console.log("Alert terblokir:", message);
         window.confirm = (message) => { console.log("Konfirmasi terblokir:", message); return false; };
 
-        // --- Fungsi Toggle SOS ---
-        function toggleSOS() {
-            // Jika status saat ini AMAN, kirim sinyal DARURAT
-            if (!currentStatusSOS) {
-                // Gunakan konfirmasi kustom sebagai pengganti alert/confirm bawaan
-                kirimSOS(true);
+        // --- Double-Tap Handler ---
+        function handleSosClick() {
+            const currentTime = new Date().getTime();
+            const timeDiff = currentTime - lastClickTime;
+
+            if (timeDiff > 0 && timeDiff < DOUBLE_CLICK_TIME) {
+                // Double tap terdeteksi
+                toggleSOSState();
+                lastClickTime = 0; // Reset untuk mencegah triple tap
             } else {
-                // Jika status saat ini DARURAT, jangan lakukan apa-apa, harus menggunakan Batal SOS
-                console.log("SOS sudah aktif. Gunakan tombol 'BATALKAN SOS' jika Anda aman.");
+                // Single tap
+                lastClickTime = currentTime;
+                // Opsional: Beri umpan balik bahwa perlu double tap
+                console.log("Tekan dua kali dengan cepat untuk mengaktifkan/menonaktifkan SOS.");
             }
         }
         
-        // --- Fungsi Batal SOS (untuk pengguna) ---
-        function batalSOS() {
-            kirimSOS(false);
+        // Menangani touch event pada perangkat mobile
+        let touchStartTimestamp = 0;
+        let tapCount = 0;
+        
+        function handleTouchStart(event) {
+            touchStartTimestamp = new Date().getTime();
+        }
+
+        function handleTouchEnd(event) {
+            const touchEndTimestamp = new Date().getTime();
+            // Jarak sentuh/klik yang terlalu lama tidak dihitung sebagai tap
+            if (touchEndTimestamp - touchStartTimestamp > DOUBLE_CLICK_TIME) {
+                tapCount = 0;
+                return;
+            }
+
+            const currentTime = new Date().getTime();
+            const timeDiff = currentTime - lastClickTime;
+
+            if (timeDiff > 0 && timeDiff < DOUBLE_CLICK_TIME) {
+                // Double tap terdeteksi (mobile)
+                toggleSOSState();
+                lastClickTime = 0;
+                tapCount = 0;
+            } else {
+                // Single tap
+                lastClickTime = currentTime;
+                tapCount++;
+            }
+        }
+
+        // --- Fungsi Inti Toggle SOS State ---
+        function toggleSOSState() {
+            const newStatus = !currentStatusSOS;
+            kirimStatusKeFirebase(newStatus);
         }
 
         // --- Fungsi Inti Kirim/Reset Status ke Firebase ---
-        function kirimSOS(status) {
+        function kirimStatusKeFirebase(status) {
+            // Perbarui status_sos di node pengguna dan pengawas (hanya jika diperlukan)
             Promise.all([
                 userRef.update({ status_sos: status }),
-                userRef2.update({ status_sos: status })
+                pengawasRef.update({ status_sos: status }) // Asumsi pengawas juga perlu tahu statusnya
             ])
             .then(() => {
                 const action = status ? "diaktifkan" : "dinonaktifkan";
@@ -138,21 +179,15 @@
         }
 
 
-        // --- Fungsi untuk Mendengarkan Data Real-time (Konfirmasi) ---
+        // --- Fungsi untuk Mendengarkan Data Real-time ---
         function listenForData() {
-            statusKoneksi.textContent = 'TERHUBUNG';
-            statusKoneksi.classList.remove('text-gray-400');
-            statusKoneksi.classList.add('bg-green-600', 'text-white', 'p-1', 'rounded');
-
+            
+            // 1. Mendengarkan Status SOS Pengguna
             userRef.on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (!data) {
-                    penggunaName.textContent = 'User';
-                    return;
-                }
+                if (!data) return;
 
                 currentStatusSOS = data.status_sos === true;
-                penggunaName.textContent = data.nama || 'User';
 
                 // Update UI berdasarkan status SOS dari database
                 if (currentStatusSOS) {
@@ -161,40 +196,40 @@
                     sosCurrentStatus.classList.remove('text-green-400');
                     sosCurrentStatus.classList.add('text-red-400');
                     sosBtn.classList.add('sos-active-glow');
-                    
-                    batalSosBtn.disabled = false;
-                    batalSosBtn.classList.remove('bg-gray-500', 'cursor-not-allowed', 'opacity-50');
-                    batalSosBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                    
                 } else {
                     // Tampilan SOS AMAN
                     sosCurrentStatus.textContent = 'AMAN';
                     sosCurrentStatus.classList.remove('text-red-400');
                     sosCurrentStatus.classList.add('text-green-400');
                     sosBtn.classList.remove('sos-active-glow');
-                    
-                    batalSosBtn.disabled = true;
-                    batalSosBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    batalSosBtn.classList.add('bg-gray-500', 'cursor-not-allowed', 'opacity-50');
                 }
 
             }, (error) => {
-                console.error("Error membaca Firebase data:", error);
-                statusKoneksi.textContent = 'Gagal (Cek Izin/Koneksi)';
-                statusKoneksi.classList.remove('bg-green-600', 'text-white');
-                statusKoneksi.classList.add('bg-yellow-600', 'text-white');
+                console.error("Error membaca Firebase data pengguna:", error);
+            });
+            
+            // 2. Mendengarkan Info Pengawas
+            pengawasRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    pengawasNamaEl.textContent = 'N/A';
+                    pengawasHpEl.textContent = 'N/A';
+                    return;
+                }
+                // Catatan: Saya asumsikan ada properti 'hp' di node pengawas
+                pengawasNamaEl.textContent = data.nama || 'Tidak Ditetapkan';
+                // Jika 'hp' tidak ada, gunakan placeholder
+                pengawasHpEl.textContent = data.hp || '08xxxxxxxxxx (Contoh)'; 
+
+            }, (error) => {
+                 console.error("Error membaca Firebase data pengawas:", error);
             });
         }
 
         window.onload = () => {
-             listenForData();
+            listenForData();
         };
     </script>
 
 </body>
 </html>
-
-
-
-
-
